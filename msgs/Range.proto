@@ -1,5 +1,6 @@
 syntax = "proto2";
 package sensor_msgs.msgs;
+import "quaternion.proto";
 
 message Range
 {
@@ -7,4 +8,5 @@ message Range
   required float min_distance      	= 2;
   required float max_distance  	 	= 3;
   required float current_distance     	= 4;
+  required gazebo.msgs.Quaternion orientation    = 5;
 }
