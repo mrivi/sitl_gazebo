@@ -34,7 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <stdio.h>
-#include <boost/algorithm/string.hpp>
+
 
 using namespace gazebo;
 using namespace std;
@@ -81,7 +81,14 @@ void SonarPlugin::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
   string topicName = "~/" + scopedName + "/sonar";
   boost::replace_all(topicName, "::", "/");
 
-  sonar_pub_ = node_handle_->Advertise<sensor_msgs::msgs::Range>(topicName, 10);
+  topic_name_vector_.push_back(topicName);
+
+ 
+  for (int i = 0; i < topic_name_vector_.size(); ++i)
+  {
+    sonar_pub_ = node_handle_->Advertise<sensor_msgs::msgs::Range>(topic_name_vector_[i], 10);
+  }
+  
 }
 
 void SonarPlugin::OnNewScans()
@@ -97,6 +104,9 @@ void SonarPlugin::OnNewScans()
   sonar_message.set_min_distance(parentSensor->RangeMin());
   sonar_message.set_max_distance(parentSensor->RangeMax());
   sonar_message.set_current_distance(parentSensor->Range());
+
+  sonar_message.set_h_fov(2.0f * atan(parentSensor->GetRadius() / parentSensor->RangeMax()));
+  sonar_message.set_v_fov(2.0f * atan(parentSensor->GetRadius() / parentSensor->RangeMax()));
   ignition::math::Quaterniond pose_model_quaternion = parentSensor->Pose().Rot();
   gazebo::msgs::Quaternion* orientation = new gazebo::msgs::Quaternion();
   orientation->set_x(pose_model_quaternion.X());
@@ -106,4 +116,6 @@ void SonarPlugin::OnNewScans()
   sonar_message.set_allocated_orientation(orientation);
 
   sonar_pub_->Publish(sonar_message);
+
+
 }

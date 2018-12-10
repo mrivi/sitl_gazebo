@@ -26,6 +26,7 @@
 #include "gazebo/sensors/SensorTypes.hh"
 #include "gazebo/sensors/SonarSensor.hh"
 #include "gazebo/util/system.hh"
+#include <boost/algorithm/string.hpp>
 
 #include "Range.pb.h"
 
@@ -56,6 +57,7 @@ namespace gazebo
       transport::NodePtr node_handle_;
       transport::PublisherPtr sonar_pub_;
       std::string namespace_;
+      std::vector<std::string> topic_name_vector_;
 
 
     /// \brief The connection tied to RayPlugin::OnNewLaserScans()

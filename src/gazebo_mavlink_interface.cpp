@@ -190,7 +190,14 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   imu_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + imu_sub_topic_, &GazeboMavlinkInterface::ImuCallback, this);
   lidar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + lidar_sub_topic_, &GazeboMavlinkInterface::LidarCallback, this);
   opticalFlow_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + opticalFlow_sub_topic_, &GazeboMavlinkInterface::OpticalFlowCallback, this);
-  sonar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + sonar_sub_topic_, &GazeboMavlinkInterface::SonarCallback, this);
+  std::vector<std::string> topic_name;
+  topic_name.push_back(sonar_sub_topic_);
+  topic_name.push_back(kDefaultSonar2Topic);
+  for (int i = 0; i < 2; ++i) {
+    std::string sonar_topic = "~/" + model_->GetName() + topic_name[i];
+    sonar_sub_ = node_handle_->Subscribe(sonar_topic, boost::bind(&GazeboMavlinkInterface::SonarCallback, this, _1));
+  }
+ 
   irlock_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + irlock_sub_topic_, &GazeboMavlinkInterface::IRLockCallback, this);
   gps_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + gps_sub_topic_, &GazeboMavlinkInterface::GpsCallback, this);
   groundtruth_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + groundtruth_sub_topic_, &GazeboMavlinkInterface::GroundtruthCallback, this);
@@ -724,7 +731,7 @@ void GazeboMavlinkInterface::OpticalFlowCallback(OpticalFlowPtr& opticalFlow_mes
 }
 
 void GazeboMavlinkInterface::SonarCallback(SonarPtr& sonar_message) {
-  mavlink_distance_sensor_t sensor_msg;
+  mavlink_distance_sensor_t sensor_msg = {};
   sensor_msg.time_boot_ms = sonar_message->time_usec() / 1e3;
   sensor_msg.min_distance = sonar_message->min_distance() * 100.0;
   sensor_msg.max_distance = sonar_message->max_distance() * 100.0;
@@ -740,7 +747,8 @@ void GazeboMavlinkInterface::SonarCallback(SonarPtr& sonar_message) {
   int roll = static_cast<int>(round(GetDegrees360(euler.X())));
   int pitch = static_cast<int>(round(GetDegrees360(euler.Y())));
   int yaw = static_cast<int>(round(GetDegrees360(euler.Z())));
-  
+
+  printf("%f %f %f \n", euler.X(), euler.Y(), euler.Z() );
 
   if (roll == 0 && pitch == 0 && yaw == 0) {
     sensor_msg.orientation = 25;  // downward facing
@@ -756,11 +764,17 @@ void GazeboMavlinkInterface::SonarCallback(SonarPtr& sonar_message) {
      sensor_msg.orientation = 2;  // right facing
   } else {
     sensor_msg.orientation = 100;  // custom orientation
+    sensor_msg.q[0] = sonar_message->orientation().w();
+    sensor_msg.q[1] = sonar_message->orientation().x();
+    sensor_msg.q[2] = sonar_message->orientation().y();
+    sensor_msg.q[3] = sonar_message->orientation().z();
   }
 
   sensor_msg.type = 1;
   sensor_msg.id = 1;
   sensor_msg.covariance = 0;
+  sensor_msg.h_fov = sonar_message->h_fov();
+  sensor_msg.v_fov = sonar_message->v_fov();
 
   mavlink_message_t msg;
   mavlink_msg_distance_sensor_encode_chan(1, 200, MAVLINK_COMM_0, &msg, &sensor_msg);

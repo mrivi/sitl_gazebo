@@ -1154,6 +1154,57 @@
       </axis>
     </joint>
 
+      <model name="sonar2_model">
+    <link name="link">
+      <pose>0 0 0 0 0 0</pose>
+      <inertial>
+        <pose>0 0 0 0 0 0</pose>
+        <mass>0.000000000000001</mass>
+        <inertia>
+          <ixx>2.08333333e-7</ixx>
+          <ixy>0</ixy>
+          <ixz>0</ixz>
+          <iyy>2.08333333e-7</iyy>
+          <iyz>0</iyz>
+          <izz>4.16666667e-8</izz>
+        </inertia>
+      </inertial>
+      <visual name="visual">
+        <geometry>
+          <box><size>0.005 0.015 0.005</size></box>
+        </geometry>
+        <material>
+    <script>
+            <name>Gazebo/Black</name>
+          </script>
+        </material>
+      </visual>
+      <sensor name="sonar" type="sonar">
+        <pose>0 0 0 0 1.57 -1.57</pose>
+          <sonar>
+            <min>0.02</min>
+            <max>5.0</max>
+            <radius>1.33974388395</radius>
+          </sonar>
+        <plugin name="SonarPlugin" filename="libgazebo_sonar_plugin.so"/>
+        <always_on>1</always_on>
+        <update_rate>20</update_rate>
+        <sonarSubTopic>/sonar2_model/link/sonar</sonarSubTopic>
+        <visualize>true</visualize>
+      </sensor>
+    </link>
+  </model>
+  <joint name="sonar2_joint" type="revolute">
+      <child>sonar2_model::link</child>
+      <parent>typhoon_h480::base_link</parent>
+      <axis>
+        <xyz>0 0 1</xyz>
+        <limit>
+          <upper>0</upper>
+          <lower>0</lower>
+        </limit>
+      </axis>
+    </joint>
 
     <plugin name='rosbag' filename='libgazebo_multirotor_base_plugin.so'>
       <robotNamespace></robotNamespace>
