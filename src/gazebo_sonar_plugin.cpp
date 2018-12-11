@@ -34,7 +34,7 @@
 #include <iostream>
 #include <memory>
 #include <stdio.h>
-#include <boost/algorithm/string.hpp>
+
 
 using namespace gazebo;
 using namespace std;
@@ -45,6 +45,7 @@ GZ_REGISTER_SENSOR_PLUGIN(SonarPlugin)
 /////////////////////////////////////////////////
 SonarPlugin::SonarPlugin()
 {
+  printf("constructor \n");
 }
 
 /////////////////////////////////////////////////
@@ -81,7 +82,17 @@ void SonarPlugin::Load(sensors::SensorPtr _parent, sdf::ElementPtr _sdf)
   string topicName = "~/" + scopedName + "/sonar";
   boost::replace_all(topicName, "::", "/");
 
-  sonar_pub_ = node_handle_->Advertise<sensor_msgs::msgs::Range>(topicName, 10);
+  topic_name_vector_.push_back(topicName);
+  topic_name_vector_.push_back("~/typhoon_h480/sonar2_model/link/sonar");
+   topic_name_vector_.push_back("~/typhoon_h480/sonar_right_model/link/sonar");
+
+ 
+  for (int i = 0; i < topic_name_vector_.size(); ++i)
+  {
+  // gzwarn << topic_name_vector_[i] << " " << i << "\n";
+   sonar_pub_[i] = node_handle_->Advertise<sensor_msgs::msgs::Range>(topic_name_vector_[i], 10);
+  }
+  
 }
 
 void SonarPlugin::OnNewScans()
@@ -107,6 +118,12 @@ void SonarPlugin::OnNewScans()
   orientation->set_z(pose_model_quaternion.Z());
   orientation->set_w(pose_model_quaternion.W());
   sonar_message.set_allocated_orientation(orientation);
+  sonar_message.set_id(pub_index_);
 
-  sonar_pub_->Publish(sonar_message);
+ // gzwarn << sonar_pub_[pub_index_]->GetTopic() << " pub_index " << pub_index_ << "\n";
+  
+  sonar_pub_[pub_index_]->Publish(sonar_message);
+
+  pub_index_ = (pub_index_ >= (topic_name_vector_.size() -1)) ? 0 : (pub_index_ + 1);
+  //gzwarn << pub_index_ << "\n";
 }

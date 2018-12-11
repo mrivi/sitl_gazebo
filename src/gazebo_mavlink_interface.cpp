@@ -190,7 +190,15 @@ void GazeboMavlinkInterface::Load(physics::ModelPtr _model, sdf::ElementPtr _sdf
   imu_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + imu_sub_topic_, &GazeboMavlinkInterface::ImuCallback, this);
   lidar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + lidar_sub_topic_, &GazeboMavlinkInterface::LidarCallback, this);
   opticalFlow_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + opticalFlow_sub_topic_, &GazeboMavlinkInterface::OpticalFlowCallback, this);
-  sonar_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + sonar_sub_topic_, &GazeboMavlinkInterface::SonarCallback, this);
+  std::vector<std::string> topic_name;
+  topic_name.push_back(sonar_sub_topic_);
+  topic_name.push_back(kDefaultSonar2Topic);
+  for (int i = 0; i < 2; ++i) {
+    std::string sonar_topic = "~/" + model_->GetName() + topic_name[i];
+    sonar_sub_[i] = node_handle_->Subscribe(sonar_topic, &GazeboMavlinkInterface::SonarCallback, this);
+    // std::cout << sonar_sub_[i]->GetTopic() << "\n";
+  }
+ 
   irlock_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + irlock_sub_topic_, &GazeboMavlinkInterface::IRLockCallback, this);
   gps_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + gps_sub_topic_, &GazeboMavlinkInterface::GpsCallback, this);
   groundtruth_sub_ = node_handle_->Subscribe("~/" + model_->GetName() + groundtruth_sub_topic_, &GazeboMavlinkInterface::GroundtruthCallback, this);
@@ -740,7 +748,7 @@ void GazeboMavlinkInterface::SonarCallback(SonarPtr& sonar_message) {
   int roll = static_cast<int>(round(GetDegrees360(euler.X())));
   int pitch = static_cast<int>(round(GetDegrees360(euler.Y())));
   int yaw = static_cast<int>(round(GetDegrees360(euler.Z())));
-  
+
 
   if (roll == 0 && pitch == 0 && yaw == 0) {
     sensor_msg.orientation = 25;  // downward facing
@@ -763,7 +771,7 @@ void GazeboMavlinkInterface::SonarCallback(SonarPtr& sonar_message) {
   }
 
   sensor_msg.type = 1;
-  sensor_msg.id = 1;
+  sensor_msg.id = sonar_message->id();
   sensor_msg.covariance = 0;
   sensor_msg.h_fov = sonar_message->h_fov();
   sensor_msg.v_fov = sonar_message->v_fov();

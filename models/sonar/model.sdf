@@ -31,7 +31,9 @@
             <max>5.0</max>
             <radius>1.33974388395</radius>
           </sonar>
-        <plugin name="SonarPlugin" filename="libgazebo_sonar_plugin.so"/>
+        <plugin name="SonarPlugin" filename="libgazebo_sonar_plugin.so" >
+          <sonarSubTopic>/sonar_model/link/sonar</sonarSubTopic>
+        </plugin>
         <always_on>1</always_on>
         <update_rate>20</update_rate>
         <visualize>true</visualize>
